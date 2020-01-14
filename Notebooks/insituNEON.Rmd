@@ -1,0 +1,53 @@
+---
+title: "ONAQ_insitu"
+author: "K Duffy"
+date: "12/30/2019"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(dplyr, quietly=T)
+library(lubridate)
+
+##pull all available data for a site from the NEON API
+
+library(neonUtilities)
+```
+```{r}
+
+## 
+dpid <- as.character('DP1.10055.001') #phe data
+
+pheDat <- loadByProduct(dpID="DP1.10055.001",
+                        site = c("ONAQ"),
+                        package = "basic",
+                        check.size = FALSE)
+
+# unlist all data frames
+list2env(pheDat ,.GlobalEnv)
+
+unique(phe_perindividual$taxonID)
+#[1] "BRTE"  "ARTR2" "CETE5"
+```
+
+```{r}
+# subset to cheatgrass individuals in both perindivual and statusintenstiy datasets
+# dedupe
+perind <- phe_perindividual%>%   # table with taxonID + location 
+  select(-uid, -date)%>% 
+  group_by(individualID)%>% 
+  filter(taxonID=="BRTE", editedDate==max(as.Date(editedDate)))%>%
+  ungroup()
+```
+```{r}
+obs <- phe_statusintensity%>%  # table with in situ obsevations
+  select(-uid)%>%
+  group_by(individualID, date, phenophaseName) %>%
+  filter(editedDate==max(as.Date(editedDate)) & individualID%in%perind$individualID)%>%
+  ungroup()
+```
+# merge
+df <- left_join(obs, perind, by="individualID")
+
+#lots of extraneous fields here. happy to help trim if needed. 
+```
