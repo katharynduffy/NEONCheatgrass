@@ -4,6 +4,13 @@ author: "K Duffy"
 date: "12/30/2019"
 output: html_document
 ---
+Steps: 
+1) Pull the phenological and status intensity data from MOAB (native grass) and ONAQ (BRTE)
+2) Store that data in a new Rdata frame
+3) Make 1 plot of the data to understand what's 'there'
+
+
+
 ```{r}
 library(tidyverse)
 library(dplyr, quietly=T)
@@ -19,14 +26,14 @@ library(neonUtilities)
 dpid <- as.character('DP1.10055.001') #phe data
 
 pheDat <- loadByProduct(dpID="DP1.10055.001",
-                        site = c("ONAQ"),
+                        site = c("MOAB"),
                         package = "basic",
                         check.size = FALSE)
 
 # unlist all data frames
 list2env(pheDat ,.GlobalEnv)
 
-unique(phe_perindividual$taxonID)
+unique(phe_perindividual$scientificName)
 #[1] "BRTE"  "ARTR2" "CETE5"
 ```
 
