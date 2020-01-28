@@ -52,7 +52,7 @@ perind <- phe_perindividual%>%   # table with taxonID + location
 obs <- phe_statusintensity%>%  # table with in situ obsevations
   select(-uid)%>%
   group_by(individualID, date, phenophaseName) %>%
-  filter(editedDate==max(as.Date(editedDate)) & individualID%in%perind$individualID)%>%
+  filter(individualID%in%perind$individualID)%>%
   ungroup()
 ```
 # merge
