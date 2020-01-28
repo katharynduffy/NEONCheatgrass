@@ -16,6 +16,7 @@ library(tidyverse)
 library(dplyr, quietly=T)
 library(lubridate)
 
+
 ##pull all available data for a site from the NEON API
 
 library(neonUtilities)
@@ -40,10 +41,11 @@ unique(phe_perindividual$scientificName)
 ```{r}
 # subset to cheatgrass individuals in both perindivual and statusintenstiy datasets
 # dedupe
+#fix this chunk
 perind <- phe_perindividual%>%   # table with taxonID + location 
   select(-uid, -date)%>% 
   group_by(individualID)%>% 
-  filter(taxonID=="BRTE", editedDate==max(as.Date(editedDate)))%>%
+  filter(taxonID=="BOGR2")%>%
   ungroup()
 ```
 ```{r}
