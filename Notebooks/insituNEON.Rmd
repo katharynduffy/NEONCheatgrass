@@ -55,8 +55,10 @@ obs <- phe_statusintensity%>%  # table with in situ obsevations
   filter(individualID%in%perind$individualID)%>%
   ungroup()
 ```
+
+```{r}
 # merge
-df <- left_join(obs, perind, by="individualID")
+grass_name <- left_join(obs, perind, by="individualID")
 
 #lots of extraneous fields here. happy to help trim if needed. 
 ```
