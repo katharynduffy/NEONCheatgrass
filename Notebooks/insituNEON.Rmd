@@ -45,11 +45,11 @@ unique(phe_perindividual$scientificName)
 perind <- phe_perindividual%>%   # table with taxonID + location 
   select(-uid, -date)%>% 
   group_by(individualID)%>% 
-  filter(taxonID=="BOGR2")%>%
+  filter(taxonID=="PLJA")%>%
   ungroup()
 ```
 ```{r}
-obs <- phe_statusintensity%>%  # table with in situ obsevations
+PLJA_instensity <- phe_statusintensity%>%  # table with in situ obsevations
   select(-uid)%>%
   group_by(individualID, date, phenophaseName) %>%
   filter(individualID%in%perind$individualID)%>%
