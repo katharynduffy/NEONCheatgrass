@@ -1,0 +1,113 @@
+---
+title: "In Situ Phenological Data from NPN, Plot with PhenoCam"
+author: "K Duffy"
+date: "3/11/2020"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(rnpn)
+```
+
+**Use the vignettes to pull in rnpn data here for MOAB and ONAQ
+
+
+If you pull in data from the npn website this is how you would want to read it in:
+1.change the path to whatever is on your computer)
+2.break out the data into grasses and shrubs
+3.do this separetly for ONAQ versus MOAB
+
+Example to edit for ONAQ.  This is from a different NEON site (JORN)
+```{r}
+df <- read.table('/Users/kdw223/Research/PostDoc/phenoSynth/Notebooks/greenwave_dacqre/npn_data/Jornada_StatusandIntensity_leaves.csv', header = TRUE, sep = ",", stringsAsFactors = FALSE)
+df=df%>%
+  filter(df$Intensity_Value!=-9999)
+df=df%>%
+  filter(df$Phenophase_Description==c('Leaves', 'Leaves (grasses)'))
+df$Observation_Date=as.Date(df$Observation_Date, format="%m/%d/%Y")
+xscale=data.frame(unique(df$Intensity_Value))
+```
+
+Pull out the shrub data:
+```{r}
+
+npn_SH=df%>%
+  filter(Functional.Type=='shrub')%>%
+  arrange(Observation_Date) %>%
+  rename(date=Observation_Date) %>% rowwise() %>% dplyr::mutate(percent_int_value = strsplit(Intensity_Value, '-')[[1]][2]) %>%
+  dplyr::mutate(percent_int_value = substr(percent_int_value,1,nchar(percent_int_value)-1))%>%
+  dplyr::mutate(percent_int_value = as.integer(percent_int_value)) %>% ungroup() %>%
+  dplyr::group_by(date) %>% dplyr::mutate(mean_status_int = mean(percent_int_value)) %>% 
+  dplyr::select(mean_status_int, date, Functional.Type) %>% dplyr::distinct()
+npn_SH
+```
+Pull out the grass data:
+```{r}
+npn_GR=df%>%
+  filter(Functional.Type=='grass')%>%
+  arrange(Observation_Date) %>%
+  rename(date=Observation_Date) %>% rowwise() %>% dplyr::mutate(percent_int_value = strsplit(Intensity_Value, '-')[[1]][2]) %>%
+  dplyr::mutate(percent_int_value = substr(percent_int_value,1,nchar(percent_int_value)-1)) %>%
+  dplyr::mutate(percent_int_value = as.integer(percent_int_value)) %>% ungroup() %>%
+  dplyr::group_by(date) %>% dplyr::mutate(mean_status_int = mean(percent_int_value)) %>% 
+  dplyr::select(mean_status_int, date, Functional.Type) %>% dplyr::distinct()
+  
+npn_GR
+```
+
+Plot them:
+```{r}
+
+library(plotly)
+p2 = plot_ly(
+    data = npn_GR,
+    x = ~ as.factor(npn_GR$date),
+    y = ~ as.factor(npn_GR$Intensity_Value),
+    showlegend = TRUE,
+    type = 'bar',
+     opacity = .8,
+    name='Jornada NPN Grass', 
+    #text=unique(df$Intensity_Value),
+    marker=list(color="goldenrod", size=3)
+   ) %>%
+   add_trace(
+      x=~as.factor(npn_SH$date),
+     y=~as.factor(npn_SH$Intensity_Value),
+     type = "bar",
+      opacity = .5,
+     name='Jornada NPN Shrubs',
+     marker = list(color="royalblue", size=3)
+  )
+p2
+```
+Clean up the axes:
+```{r}
+
+p2 <- p2 %>%
+  layout(
+    #title = "Time Series of ibp & JORN.00042",
+   # xaxis = list(title='Date'),
+    xaxis = list(
+        type = 'date',
+        tickformat = " %B<br>%Y", 
+        title='Date'),
+        
+        yaxis = list(
+          title = 'USA-NPN Status Intensity',
+          typeformat='%', 
+          nticks=6,
+          tick0=0,
+          dtick=25,
+          ticktext=xscale
+          # tick0=5,
+          # dtick=25, 
+          # tick
+          #range=c(0,100))
+        # yaxis = list(
+        # range=c(0,100))
+  ))
+
+p2
+```

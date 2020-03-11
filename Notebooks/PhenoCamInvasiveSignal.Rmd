@@ -4,6 +4,9 @@ author: "K Duffy"
 date: "12/28/2019"
 output: html_document
 ---
+
+PLots:
+ONAQ:
 ```{r, silent=TRUE}
 library(phenocamapi)
 library(plotly)
@@ -26,18 +29,77 @@ colnames(rois)
 
 
 ```{r}
-rois=rois%>%
+ONAQ_rois=rois%>%
   filter(site=='NEON.D15.ONAQ.DP1.00042')
-head(rois)
+head(ONAQ_rois)
+
+MOAB_rois=rois%>%
+  filter(site=='NEON.D13.MOAB.DP1.00042')
+head(MOAB_rois)
+```
+```{r}
+# phenocamr::download_phenocam(
+#   frequency = 3,
+#   veg_type = 'GR',
+#   roi_id = 1000,
+#   site = 'NEON.D13.MOAB.DP1.00033',
+#   phenophase = TRUE,
+#   out_dir = "."
+#   )
+
+moab_df=get_pheno_ts('NEON.D13.MOAB.DP1.00033', 'GR', 1000, type='3day')
+
+```
+
+
+```{r}
+# td <- phenophases("your_.csv",
+#            internal = TRUE,
+#            upper_thresh = 0.8)
+df <- read.table("NEON.D15.ONAQ.DP1.00033_GR_1000_3day.csv", header = TRUE, sep = ",")
+td <- read.table("NEON.D15.ONAQ.DP1.00033_GR_1000_3day_transition_dates.csv",
+                 header = TRUE,
+                 sep = ",")
+
+fall <- td[td$direction == "falling" & td$gcc_value == "gcc_90",]
+spring <- td[td$direction == "rising" & td$gcc_value == "gcc_90",]
+
+df_moab <- read.table("NEON.D13.MOAB.DP1.00042_GR_1000_3day.csv", header = TRUE, sep = ",")
+td_moab <- read.table("NEON.D13.MOAB.DP1.00042_GR_1000_3day_transition_dates.csv",
+                 header = TRUE,
+                 sep = ",")
+
+fall_moab <- td_moab[td_moab$direction == "falling" & td_moab$gcc_value == "gcc_90",]
+spring_moab <- td_moab[td_moab$direction == "rising" & td_moab$gcc_value == "gcc_90",]
 ```
 
 ```{r}
-ONAQ_sh=get_pheno_ts(site='NEON.D15.ONAQ.DP1.00042', vegType='SH', roiID=1001, type='1day')
+source('/Users/kdw223/Research/PostDoc/NEONCheatgrass/gcc_plot.R')
+plot1 = gcc_plot(df, spring, fall, 'ONAQ Cheatgrass')
+plot1
+plot2=gcc_plot(df_moab, spring_moab, fall_moab, 'ONAQ Cheatgrass vs. MOAB Native Grass')
+plot2
+plot3=subplot(plot1, plot2, nrows=2)
+plot3
+```
+
+
+
+
+
+```{r}
+ONAQ_sh=get_pheno_ts(site='NEON.D15.ONAQ.DP1.00042', vegType='SH', roiID=1001, type='3day')
 ONAQ_sh=ONAQ_sh[!is.na(gcc_90)]
 ONAQ_sh$smoothed=smooth(ONAQ_sh$gcc_90)
-ONAQ_gr=get_pheno_ts(site='NEON.D15.ONAQ.DP1.00042', vegType='GR', roiID=1000, type='1day')
+ONAQ_gr=get_pheno_ts(site='NEON.D15.ONAQ.DP1.00042', vegType='GR', roiID=1000, type='3day')
 ONAQ_gr=ONAQ_gr[!is.na(gcc_90)]
 ONAQ_gr$smoothed=smooth(ONAQ_gr$gcc_90)
+MOAB_gr=get_pheno_ts(site='NEON.D13.MOAB.DP1.00042', vegType='GR', roiID=1000, type='3day')
+MOAB_gr=MOAB_gr[!is.na(gcc_90)]
+MOAB_gr$smoothed=smooth(MOAB_gr$gcc_90)
+MOAB_gr_un=get_pheno_ts(site='NEON.D13.MOAB.DP1.00033', vegType='GR', roiID=1000, type='3day')
+MOAB_gr_un=MOAB_gr_un[!is.na(gcc_90)]
+MOAB_gr_un$smoothed=smooth(MOAB_gr$gcc_90)
 ```
 
 ```{r}
@@ -49,7 +111,8 @@ p = plot_ly() %>%
   name = 'ONAQ Shrubs',
   showlegend = TRUE,
   type = 'scatter',
-  mode = 'line'
+  mode = 'line', 
+  name='PhenoCam GCC'
 ) %>%
     add_trace(
   data = ONAQ_gr,
@@ -59,8 +122,42 @@ p = plot_ly() %>%
   showlegend = TRUE,
   type = 'scatter',
   mode = 'line'
+) %>%
+    add_trace(
+  data = MOAB_gr,
+  x = ~ as.Date(date),
+  y = ~ smoothed,
+  name = 'MOAB Native Grass',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line'
 ) 
 p
+```
+
+```{r}
+library(mosaic)
+
+p2 = plot_ly() %>%
+    add_trace(
+  data = ONAQ_gr,
+  x = ~ as.Date(date),
+  y = ~ zscore(smoothed),
+  name = 'ONAQ Cheatgrass',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'marker'
+) %>%
+    add_trace(
+  data = MOAB_gr,
+  x = ~ as.Date(date),
+  y = ~ zscore(smoothed),
+  name = 'MOAB Native Grass',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'marker'
+) 
+p2
 ```
 
 ```{r}
@@ -86,14 +183,14 @@ p
 ```
 
 ```{r}
-phenocamr::download_phenocam(
-  frequency = 1,
-  veg_type = 'SH',
-  roi_id = 1001,
-  site = rois$site[1],
-  phenophase = TRUE,
-  out_dir = "."
-  )
+# phenocamr::download_phenocam(
+#   frequency = 1,
+#   veg_type = 'SH',
+#   roi_id = 1001,
+#   site = 'NEON.D15.ONAQ.DP1.00042',
+#   phenophase = TRUE,
+#   out_dir = "."
+#   )
 #phenocamr::download_phenocam(
  # frequency = 3,
   #veg_type = 'GR',
@@ -107,25 +204,25 @@ phenocamr::download_phenocam(
 
 ```{r}
 # load the time series data but replace the csv filename with whatever you downloaded
-df_sh <- read.table("NEON.D15.ONAQ.DP1.00042_SH_1001_1day.csv", header = TRUE, sep = ",")
+df_sh <- read.table("~/Research/PostDoc/NEONCheatgrass/NEON.D15.ONAQ.DP1.00042_SH_1001_1day.csv", header = TRUE, sep = ",")
 
 # read in the transition date file
-td_sh <- read.table("NEON.D15.ONAQ.DP1.00042_SH_1001_1day_transition_dates.csv",
+td_sh <- read.table("~/Research/PostDoc/NEONCheatgrass/NEON.D15.ONAQ.DP1.00042_SH_1001_1day_transition_dates.csv",
                  header = TRUE,
                  sep = ",")
-df_gr <- read.table("NEON.D15.ONAQ.DP1.00042_GR_1000_1day.csv", header = TRUE, sep = ",")
+df_gr <- read.table("~/Research/PostDoc/NEONCheatgrass/NEON.D15.ONAQ.DP1.00042_GR_1000_1day.csv", header = TRUE, sep = ",")
 
 # read in the transition date file
-td_gr <- read.table("NEON.D15.ONAQ.DP1.00042_GR_1000_1day_transition_dates.csv",
+td_gr <- read.table("~/Research/PostDoc/NEONCheatgrass/NEON.D15.ONAQ.DP1.00042_GR_1000_1day_transition_dates.csv",
                  header = TRUE,
                  sep = ",")
 ```
 
 ```{r}
-spring_sh <- td_sh[td_sh$direction == "rising" & td$gcc_value == "gcc_90",]
-fall_sh <- td_sh[td_sh$direction == "falling" & td$gcc_value == "gcc_90",]
-spring_gr <- td_gr[td_gr$direction == "rising" & td$gcc_value == "gcc_90",]
-fall_gr <- td_gr[td_gr$direction == "falling" & td$gcc_value == "gcc_90",]
+spring_sh <- td_sh[td_sh$direction == "rising" & td_sh$gcc_value == "gcc_90",]
+fall_sh <- td_sh[td_sh$direction == "falling" & td_sh$gcc_value == "gcc_90",]
+spring_gr <- td_gr[td_gr$direction == "rising" & td_gr$gcc_value == "gcc_90",]
+fall_gr <- td_gr[td_gr$direction == "falling" & td_gr$gcc_value == "gcc_90",]
 ```
 ```{r}
 p_sh = plot_ly() %>%

@@ -1,0 +1,103 @@
+---
+title: "ONAQ Cheatgrass Data from NEON"
+author: "K Duffy"
+date: "1/30/2020"
+output: html_document
+---
+
+```{r}
+
+greenup=magnitude_phenometrics_data%>%
+  filter(magnitude_phenometrics_data$Phenophase_Description=='Initial growth (grasses/sedges)')%>%
+  arrange(Start_Date)
+
+leaves=magnitude_phenometrics_data%>%
+  filter(magnitude_phenometrics_data$Phenophase_Description=='Leaves (grasses)')%>%
+  arrange(Start_Date)
+
+
+
+
+```
+
+
+```{r}
+#magnitude_phenometrics_data=magnitude_phenometrics_data[order(magnitude_phenometrics_data$Start_Date), ]
+p3 = plot_ly(
+  legend=TRUE
+) %>%
+  add_trace(
+  data = greenup,
+  x = ~ Start_Date,
+  y = ~ smooth(Proportion_Yes_Records),
+  name = 'ONAQ Cheatgrass initial growth',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line') %>%
+  add_trace(
+  data = leaves,
+  x = ~ Start_Date,
+  y = ~ smooth(Proportion_Yes_Records),
+  name = 'ONAQ Cheatgrass Leaves',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line')
+  
+p3
+```
+
+```{r}
+p3 = plot_ly(
+  legend=TRUE
+)  %>%
+  add_trace(
+  data = leaves,
+  x = ~ Start_Date,
+  y = ~ smooth(Proportion_Yes_Records),
+  name = 'ONAQ Cheatgrass Leaves',
+  showlegend = TRUE,
+  type = 'bar')
+  
+p3
+```
+
+```{r}
+ay <- list(
+  overlaying = "y",
+  side = "right",
+  title = "Proportion Yes Records (NEON)",
+  side = "left", 
+  title = "PhenoCam GCC"
+)
+# y= list(
+#   overlaying = "y",
+#   side = "left",
+#   title = "PhenoCam GCC")
+
+p4=plot_ly()%>%
+    add_trace(
+  data = ONAQ_gr,
+  x = ~ as.Date(date),
+  y = ~ smoothed,
+  name = 'PhenoCam',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line', 
+  xaxis= 'PhenoCam GCC'
+) %>%
+  add_trace(
+  data = leaves,
+  opacity=.5, 
+  x = ~ Start_Date,
+  y = ~ smooth(Proportion_Yes_Records),
+  name = 'Leaves (NEON-USA NPN)',
+  showlegend = TRUE,
+  type = 'bar', yaxis = "y2") %>%
+  layout(
+    title = "ONAQ Cheatgrass
+    (PhenoCam & NEON)", yaxis2 = ay,
+    #yaxis=y,
+    xaxis = list(title="Date")
+  )
+p4
+```

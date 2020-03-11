@@ -1,0 +1,86 @@
+---
+title: "ONAQ images"
+author: "K Duffy"
+date: "2/17/2020"
+output: html_document
+---
+```{r}
+library(data.table)
+library(phenocamapi)
+library(lubridate)
+library(jpeg)
+```
+
+```{r midday-list, fig.height=5, fig.width=8, message=FALSE}
+# obtaining midday_images for HARV
+HARV_middays <- get_midday_list('NEON.D13.MOAB.DP1.00033')
+# see the first few rows
+head(HARV_middays)
+```
+
+```{r midday-download, fig.height=5, fig.width=8}
+# download a file
+destfile <- tempfile(fileext = '.jpg')
+# download only the first available file
+# modify the `[1]` to download other images
+download.file(HARV_middays[50], destfile = destfile, mode = 'wb')
+# plot the image
+img <- try(readJPEG(destfile))
+if(class(img)!='try-error'){
+  par(mar= c(0,0,0,0))
+  plot(0:1,0:1, type='n', axes= FALSE, xlab= '', ylab = '')
+  rasterImage(img, 0, 0, 1, 1)
+}
+```
+
+```{r midday-time-range, fig.height=6, fig.width=8, message=FALSE, eval=TRUE}
+# open a temporary directory
+tmp_dir <- tempdir()
+# download a subset. Example NEON.D01.HARV.DP1.00033 2017
+download_midday_images(site = 'NEON.D13.MOAB.DP1.00033', # which site
+                       y = 2017, # which year(s)
+                       months = 3:7, # which month(s)
+                       days = 15, # which days on month(s)
+                       download_dir = tmp_dir) # where on your computer
+# list of downloaded files
+HARV_middays_path <- dir(tmp_dir, pattern = 'NEON.D13.MOAB.DP1.00033*', full.names = TRUE)
+head(HARV_middays_path)
+```
+
+```{r plot-monthly-forest, fig.height=6, fig.width=8, message=FALSE, eval=TRUE}
+n <- length(HARV_middays_path)
+par(mar= c(0,0,0,0), mfrow=c(4,3), oma=c(0,0,3,0))
+for(i in 1:n){
+  img <- readJPEG(HARV_middays_path[i])
+  plot(0:1,0:1, type='n', axes= FALSE, xlab= '', ylab = '')
+  rasterImage(img, 0, 0, 1, 1)
+  mtext(month.name[i], line = -2)
+}
+mtext('Seasonal variation of phenology at NEON MOAB', font = 2, outer = TRUE)
+```
+
+```{r midday-time-range, fig.height=6, fig.width=8, message=FALSE, eval=TRUE}
+# open a temporary directory
+tmp_dir <- tempdir()
+# download a subset. Example NEON.D01.HARV.DP1.00033 2017
+download_midday_images(site = 'NEON.D17.SJER.DP1.00042', # which site
+                       y = 2019, # which year(s)
+                       months = 3:7, # which month(s)
+                       days = 15, # which days on month(s)
+                       download_dir = '/Users/kdw223/Research/PostDoc/NEONCheatgrass/SJER_images') # where on your computer
+# list of downloaded files
+HARV_middays_path <- dir(tmp_dir, pattern = 'NEON.D17.SJER.DP1.00042*', full.names = TRUE)
+head(HARV_middays_path)
+```
+
+```{r plot-monthly-forest, fig.height=6, fig.width=8, message=FALSE, eval=TRUE}
+n <- length(HARV_middays_path)
+par(mar= c(0,0,0,0), mfrow=c(4,3), oma=c(0,0,3,0))
+for(i in 1:n){
+  img <- readJPEG(HARV_middays_path[i])
+  plot(0:1,0:1, type='n', axes= FALSE, xlab= '', ylab = '')
+  rasterImage(img, 0, 0, 1, 1)
+  mtext(month.name[i], line = -2)
+}
+mtext('Seasonal variation of forest at NEON ONAQ', font = 2, outer = TRUE)
+```
